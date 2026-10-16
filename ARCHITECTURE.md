@@ -115,7 +115,8 @@ src/
 ├── tools/               MCP tool functions (one concern per file)
 │   ├── analysis.py      analyze_codebase — ingestion workflows
 │   ├── queries.py       get_callers, get_callees, detect_cycles, etc.
-│   └── export.py        generate_mermaid_graph, export_ide_graph
+│   ├── export.py        generate_mermaid_graph, export_ide_graph
+│   └── feedback.py      send_feedback, submit_feedback — webhook / GitHub
 │
 └── utils/               Cross-cutting infrastructure
     ├── config.py         Runtime config: MCP_MODE, CPP_EXTENSIONS

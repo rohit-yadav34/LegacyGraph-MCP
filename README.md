@@ -204,6 +204,8 @@ Add the following configuration, ensuring you **replace the `cwd` paths** with t
 | `detect_cycles` | Identify circular dependencies | Both |
 | `get_orphan_functions` | Find unused code | Both |
 | `generate_mermaid_graph` | Return Mermaid diagram inline (token‑safe) | Both |
+| `send_feedback` | Submit feedback, bugs, or feature requests to webhook/GitHub/log | Both |
+| `submit_feedback` | Alias for `send_feedback` | Both |
 | `export_ide_graph` | Save Mermaid `.md` file to local disk | Local only |
 
 ---

@@ -42,3 +42,30 @@ else:
 # An empty string is provided as the intentional safe default to prevent 
 # accidental writes to a developer's personal bucket or unintended syncing.
 HF_BUCKET_URL: str = os.environ.get("HF_BUCKET_URL", "")
+
+# ============================================================
+# Feedback & Feature Requests
+# ============================================================
+
+# Optional Webhook URL (e.g. Discord, Slack, Zapier, or generic HTTP POST)
+FEEDBACK_WEBHOOK_URL: str = os.environ.get("FEEDBACK_WEBHOOK_URL", "")
+
+# Optional GitHub API settings for creating issues
+GITHUB_TOKEN: str = os.environ.get("GITHUB_TOKEN", os.environ.get("GH_TOKEN", ""))
+GITHUB_REPO: str = os.environ.get(
+    "GITHUB_REPO",
+    os.environ.get("GITHUB_REPOSITORY", "rohit-yadav34/LegacyGraph-MCP"),
+)
+
+# Local feedback log destination (fallback or local audit trail)
+if IS_STORAGE_MOUNTED and MCP_MODE == "cloud":
+    FEEDBACK_LOCAL_PATH: str = os.environ.get(
+        "FEEDBACK_LOCAL_PATH",
+        str(Path(PERSISTENT_STORAGE_ROOT) / "feedback.jsonl"),
+    )
+else:
+    FEEDBACK_LOCAL_PATH = os.environ.get(
+        "FEEDBACK_LOCAL_PATH",
+        str(_SRC_ROOT / "data" / "feedback.jsonl"),
+    )
+
