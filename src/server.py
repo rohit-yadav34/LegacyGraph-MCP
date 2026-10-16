@@ -29,7 +29,6 @@ from src.tools import (
     generate_mermaid_graph,
     export_ide_graph,
     send_feedback,
-    submit_feedback,
 )
 
 SERVER_NAME = "legacy-mcp-analyzer"
@@ -106,8 +105,6 @@ def _register_tools(mode: str, server: Optional["FastMCP"] = None) -> "FastMCP":
     target.tool()(get_orphan_functions)
     target.tool()(generate_mermaid_graph)
     target.tool()(send_feedback)
-    target.tool()(submit_feedback)
-
 
     # Task Management (SEP-1686)
     @target.tool()

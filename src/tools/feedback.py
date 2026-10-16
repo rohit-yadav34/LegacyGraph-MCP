@@ -1,8 +1,9 @@
 """
 Discord Feedback and Feature Request MCP tool for LegacyGraph-MCP.
 
-Enables users and autonomous coding agents to submit bug reports,
-feedback, and feature requests directly to the dedicated Discord channel.
+Sends feedback, bug reports, and feature requests directly to Discord.
+If delivery to Discord fails or no webhook is configured, it falls back
+to saving the feedback locally so nothing is ever lost.
 """
 
 from datetime import datetime, timezone
@@ -69,7 +70,7 @@ def _format_discord_payload(
 
 
 def _save_local_feedback(entry: dict[str, Any]) -> tuple[bool, str]:
-    """Append the feedback entry to a local JSONL audit file."""
+    """Append the feedback entry to a local JSONL audit file on fallback."""
     try:
         filepath = Path(config.FEEDBACK_LOCAL_PATH)
         with _FILE_LOCK:
@@ -91,10 +92,11 @@ def send_feedback(
     webhook_url: Optional[str] = None,
 ) -> str:
     """
-    Send feedback, bug reports, or feature requests directly to the Discord channel.
+    Send feedback, bug reports, or feature requests directly to Discord.
 
-    Dispatches the message directly to the configured Discord incoming webhook
-    with formatted embeds, and logs an entry to the local audit trail.
+    Sends the message to the configured Discord webhook. If the webhook
+    is unavailable or fails, it automatically saves to local feedback storage
+    as a fallback.
 
     Args:
         message: The feedback content, bug description, or feature request details (required).
@@ -102,7 +104,7 @@ def send_feedback(
         title: Short summary/title. If not provided, extracted from the first line of message.
         email: Optional contact email or user identifier.
         metadata: Optional dictionary of context (e.g. project_id, environment, tool name).
-        webhook_url: Optional webhook URL override (defaults to the configured Discord webhook).
+        webhook_url: Optional webhook URL override (defaults to FEEDBACK_WEBHOOK_URL).
 
     Returns:
         A formatted confirmation message indicating delivery status.
@@ -130,15 +132,16 @@ def send_feedback(
         "source": "LegacyGraph-MCP",
     }
 
-    # Record to local audit log
-    saved_local, local_path = _save_local_feedback(entry)
-
-    # Determine target webhook
     active_webhook = (webhook_url or config.FEEDBACK_WEBHOOK_URL).strip()
     if not active_webhook:
+        _saved, local_path = _save_local_feedback(entry)
         return (
-            f"Error: No webhook URL configured. "
-            f"Saved feedback locally to `{local_path}` with ID `{feedback_id}`."
+            f"### Feedback Saved Locally (No Webhook Configured)\n"
+            f"- **ID**: `{feedback_id}`\n"
+            f"- **Category**: `{category}`\n"
+            f"- **Title**: {resolved_title}\n"
+            f"- **Local Fallback File**: `{local_path}`\n\n"
+            f"Note: Configure FEEDBACK_WEBHOOK_URL to send directly to Discord."
         )
 
     # Build Discord embed payload
@@ -161,43 +164,23 @@ def send_feedback(
                     f"- **ID**: `{feedback_id}`\n"
                     f"- **Category**: `{category}`\n"
                     f"- **Title**: {resolved_title}\n"
-                    f"- **Status**: Successfully delivered to Discord channel.\n"
-                    f"- **Local Record**: `{local_path}`"
+                    f"- **Status**: Successfully delivered to Discord channel."
                 )
+
+            # Failure: Fall back to local file
+            _saved, local_path = _save_local_feedback(entry)
             return (
-                f"### Feedback Submission Warning\n"
+                f"### Feedback Delivery Failed (Saved Locally as Fallback)\n"
                 f"- **ID**: `{feedback_id}`\n"
-                f"- **Warning**: Discord webhook returned HTTP {resp.status_code}: {resp.text[:200]}\n"
-                f"- **Local Record**: Saved locally to `{local_path}`."
+                f"- **Discord Error**: HTTP {resp.status_code} ({resp.text[:200]})\n"
+                f"- **Fallback Record**: Preserved locally in `{local_path}`."
             )
     except Exception as exc:
-        logger.warning(f"Failed to deliver feedback to Discord webhook: {exc}")
+        logger.warning(f"Failed to deliver feedback to Discord: {exc}")
+        _saved, local_path = _save_local_feedback(entry)
         return (
-            f"### Feedback Submission Warning\n"
+            f"### Feedback Delivery Failed (Saved Locally as Fallback)\n"
             f"- **ID**: `{feedback_id}`\n"
-            f"- **Warning**: Failed to reach Discord ({str(exc)})\n"
-            f"- **Local Record**: Preserved locally in `{local_path}`."
+            f"- **Connection Error**: {str(exc)}\n"
+            f"- **Fallback Record**: Preserved locally in `{local_path}`."
         )
-
-
-def submit_feedback(
-    message: str,
-    category: str = "feedback",
-    title: Optional[str] = None,
-    email: Optional[str] = None,
-    metadata: Optional[dict[str, Any]] = None,
-    webhook_url: Optional[str] = None,
-) -> str:
-    """
-    Alias for send_feedback.
-
-    Sends feedback, bug reports, or feature requests directly to the Discord channel.
-    """
-    return send_feedback(
-        message=message,
-        category=category,
-        title=title,
-        email=email,
-        metadata=metadata,
-        webhook_url=webhook_url,
-    )

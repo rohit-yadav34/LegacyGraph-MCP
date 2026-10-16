@@ -84,7 +84,7 @@ def test_cloud_tool_registration():
     assert "export_ide_graph" not in registered, (
         f"export_ide_graph must NOT be registered in cloud mode; got: {registered}"
     )
-    for expected in ("analyze_codebase", "get_callers", "get_callees", "send_feedback", "submit_feedback"):
+    for expected in ("analyze_codebase", "get_callers", "get_callees", "send_feedback"):
         assert expected in registered, (
             f"Expected tool '{expected}' to be registered in cloud mode; got: {registered}"
         )

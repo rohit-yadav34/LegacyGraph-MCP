@@ -168,22 +168,18 @@ Returns a message telling the user to open the file in their IDE's Markdown Prev
 
 ---
 
-### `send_feedback(message, category?, title?, target?, email?, metadata?, webhook_url?, github_repo?)`
+### `send_feedback(message, category?, title?, email?, metadata?, webhook_url?)`
 
-Enables users or autonomous coding agents to submit feedback, report edge-case bugs, or request features directly from within the MCP session. Dispatches to incoming webhooks (Discord, Slack, Zapier, custom HTTP POST), creates GitHub Issues via the GitHub REST API, and maintains a persistent local JSONL audit trail.
+Enables users or autonomous coding agents to submit feedback, report bugs, or request features directly to the project's Discord channel. If the Discord webhook is unavailable or the request fails, it automatically falls back to saving the feedback in the local audit log (`data/feedback.jsonl`).
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `message` | `str` (required) | — | Detailed feedback description or feature request |
-| `category` | `str` (optional) | `"feedback"` | Type of submission: `'feature_request'`, `'bug'`, `'feedback'`, `'general'` |
+| `category` | `str` (optional) | `"feedback"` | Type: `'feature_request'`, `'bug'`, `'feedback'`, `'general'` |
 | `title` | `str` (optional) | `None` | Short summary (extracted from first line if omitted) |
-| `target` | `str` (optional) | `"auto"` | Destination: `'auto'`, `'webhook'`, `'github'`, or `'local'` |
 | `email` | `str` (optional) | `None` | Optional contact email or user identifier |
 | `metadata` | `dict` (optional) | `None` | Contextual dictionary (project_id, client name, environment) |
-| `webhook_url` | `str` (optional) | `None` | Explicit webhook URL override |
-| `github_repo` | `str` (optional) | `None` | Explicit GitHub repository override (`owner/repo`) |
-
-*Note: `submit_feedback` is also registered as an alias with identical arguments.*
+| `webhook_url` | `str` (optional) | `None` | Optional webhook URL override |
 
 ---
 

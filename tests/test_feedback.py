@@ -1,5 +1,5 @@
 """
-Unit and integration tests for Discord send_feedback and submit_feedback MCP tools.
+Unit and integration tests for Discord send_feedback MCP tool.
 """
 
 import json
@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import src.utils.config as config
-from src.tools.feedback import send_feedback, submit_feedback
+from src.tools.feedback import send_feedback
 
 
 @pytest.fixture(autouse=True)
@@ -37,14 +37,14 @@ def test_send_feedback_empty_message():
     assert "Error: Feedback message cannot be empty" in res2
 
 
-def test_send_feedback_discord_success():
-    """Feedback successfully delivered to Discord webhook."""
+def test_send_feedback_discord_success_no_local_fallback():
+    """On success, feedback goes straight to Discord without touching fallback file."""
     mock_resp = MagicMock()
     mock_resp.status_code = 204
 
     with patch("httpx.Client.post", return_value=mock_resp) as mock_post:
         res = send_feedback(
-            message="Please add qualified name resolution file::Class::method.",
+            message="Add qualified name resolution file::Class::method.",
             category="feature_request",
             email="developer@example.com",
             metadata={"client": "antigravity-ide"},
@@ -58,20 +58,14 @@ def test_send_feedback_discord_success():
         assert call_args[0] == config.DISCORD_FEEDBACK_WEBHOOK
         payload = call_kwargs["json"]
         assert payload["username"] == "LegacyGraph MCP"
-        assert "embeds" in payload
         assert len(payload["embeds"]) == 1
         embed = payload["embeds"][0]
         assert embed["color"] == 0x2ECC71  # Emerald green for feature_request
         assert "qualified name resolution" in embed["description"]
 
-        # Local audit log check
+        # Successful Discord send does not create a local fallback file
         log_file = Path(config.FEEDBACK_LOCAL_PATH)
-        assert log_file.exists()
-        lines = log_file.read_text(encoding="utf-8").strip().splitlines()
-        assert len(lines) == 1
-        entry = json.loads(lines[0])
-        assert entry["category"] == "feature_request"
-        assert entry["email"] == "developer@example.com"
+        assert not log_file.exists()
 
 
 def test_send_feedback_discord_bug_color():
@@ -90,47 +84,49 @@ def test_send_feedback_discord_bug_color():
         assert payload["embeds"][0]["color"] == 0xE74C3C  # Red for bug
 
 
-def test_send_feedback_discord_http_warning():
-    """Handles non-200/204 HTTP status without raising unhandled exception."""
+def test_send_feedback_discord_failure_triggers_fallback():
+    """When Discord returns an error (HTTP 404/500), it falls back to saving locally."""
     mock_resp = MagicMock()
-    mock_resp.status_code = 500
-    mock_resp.text = "Internal Server Error"
+    mock_resp.status_code = 404
+    mock_resp.text = '{"message": "Unknown Webhook", "code": 10015}'
 
     with patch("httpx.Client.post", return_value=mock_resp):
-        res = send_feedback("Testing failure mode")
-        assert "Feedback Submission Warning" in res
-        assert "Discord webhook returned HTTP 500" in res
+        res = send_feedback("Testing fallback on Discord 404")
+        assert "Feedback Delivery Failed (Saved Locally as Fallback)" in res
+        assert "HTTP 404" in res
+
+        # Verify fallback saved to local file
+        log_file = Path(config.FEEDBACK_LOCAL_PATH)
+        assert log_file.exists()
+        lines = log_file.read_text(encoding="utf-8").strip().splitlines()
+        assert len(lines) == 1
+        entry = json.loads(lines[0])
+        assert entry["message"] == "Testing fallback on Discord 404"
 
 
-def test_send_feedback_network_exception():
-    """Handles connection errors gracefully."""
+def test_send_feedback_network_exception_triggers_fallback():
+    """When network times out or fails, it falls back to saving locally."""
     with patch("httpx.Client.post", side_effect=Exception("Connection timed out")):
-        res = send_feedback("Testing timeout resilience")
-        assert "Feedback Submission Warning" in res
-        assert "Failed to reach Discord" in res
-        assert "Preserved locally" in res
+        res = send_feedback("Testing timeout fallback")
+        assert "Feedback Delivery Failed (Saved Locally as Fallback)" in res
+        assert "Connection Error" in res
+
+        log_file = Path(config.FEEDBACK_LOCAL_PATH)
+        assert log_file.exists()
 
 
-def test_send_feedback_no_webhook_url():
-    """Warns if webhook URL is empty."""
+def test_send_feedback_no_webhook_url_saves_locally():
+    """When no webhook URL is configured, saves locally and informs the user."""
     config.FEEDBACK_WEBHOOK_URL = ""
     res = send_feedback("Testing missing webhook")
-    assert "Error: No webhook URL configured" in res
-    assert "Saved feedback locally" in res
+    assert "Feedback Saved Locally (No Webhook Configured)" in res
+
+    log_file = Path(config.FEEDBACK_LOCAL_PATH)
+    assert log_file.exists()
 
 
-def test_submit_feedback_alias():
-    """submit_feedback functions as a direct alias for send_feedback."""
-    mock_resp = MagicMock()
-    mock_resp.status_code = 204
-
-    with patch("httpx.Client.post", return_value=mock_resp):
-        res = submit_feedback("Testing alias call")
-        assert "Feedback Delivered to Discord" in res
-
-
-def test_feedback_tools_registration_local_and_cloud():
-    """Verify send_feedback and submit_feedback are registered in both local and cloud modes."""
+def test_feedback_tool_registration_local_and_cloud():
+    """Verify send_feedback is registered in both local and cloud modes."""
     import asyncio
     from fastmcp import FastMCP
     from src.server import _register_tools
@@ -141,4 +137,4 @@ def test_feedback_tools_registration_local_and_cloud():
         registered = list(asyncio.run(srv.get_tools()).keys())
 
         assert "send_feedback" in registered, f"send_feedback not registered in {mode} mode"
-        assert "submit_feedback" in registered, f"submit_feedback not registered in {mode} mode"
+        assert "submit_feedback" not in registered, "submit_feedback should no longer be registered"

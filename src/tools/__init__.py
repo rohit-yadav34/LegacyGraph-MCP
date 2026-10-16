@@ -10,7 +10,7 @@ from src.tools.queries import (
     get_orphan_functions,
 )
 from src.tools.export import generate_mermaid_graph, export_ide_graph
-from src.tools.feedback import send_feedback, submit_feedback
+from src.tools.feedback import send_feedback
 
 __all__ = [
     "analyze_codebase",
@@ -23,6 +23,5 @@ __all__ = [
     "generate_mermaid_graph",
     "export_ide_graph",
     "send_feedback",
-    "submit_feedback",
 ]
 
