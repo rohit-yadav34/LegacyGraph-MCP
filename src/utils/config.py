@@ -44,18 +44,20 @@ else:
 HF_BUCKET_URL: str = os.environ.get("HF_BUCKET_URL", "")
 
 # ============================================================
-# Feedback & Feature Requests
+# Discord Feedback & Feature Requests
 # ============================================================
 
-# Optional Webhook URL (e.g. Discord, Slack, Zapier, or generic HTTP POST)
-FEEDBACK_WEBHOOK_URL: str = os.environ.get("FEEDBACK_WEBHOOK_URL", "")
-
-# Optional GitHub API settings for creating issues
-GITHUB_TOKEN: str = os.environ.get("GITHUB_TOKEN", os.environ.get("GH_TOKEN", ""))
-GITHUB_REPO: str = os.environ.get(
-    "GITHUB_REPO",
-    os.environ.get("GITHUB_REPOSITORY", "rohit-yadav34/LegacyGraph-MCP"),
+DISCORD_FEEDBACK_WEBHOOK: str = (
+    "https://discord.com/api/webhooks/1560719317941620767/"
+    "EGtM3b8TvB6zZskwv7KeVhPS5Hw_p_0s6TB9Er08-Jqb6E0Z3AhSNieKtHdfPV_a9Nsn"
 )
+
+# Webhook URL (defaults to Discord feedback channel; can be overridden via env)
+FEEDBACK_WEBHOOK_URL: str = os.environ.get(
+    "FEEDBACK_WEBHOOK_URL",
+    DISCORD_FEEDBACK_WEBHOOK,
+)
+
 
 # Local feedback log destination (fallback or local audit trail)
 if IS_STORAGE_MOUNTED and MCP_MODE == "cloud":
