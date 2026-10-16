@@ -42,3 +42,32 @@ else:
 # An empty string is provided as the intentional safe default to prevent 
 # accidental writes to a developer's personal bucket or unintended syncing.
 HF_BUCKET_URL: str = os.environ.get("HF_BUCKET_URL", "")
+
+# ============================================================
+# Discord Feedback & Feature Requests
+# ============================================================
+
+DISCORD_FEEDBACK_WEBHOOK: str = (
+    "https://discord.com/api/webhooks/1560719317941620767/"
+    "EGtM3b8TvB6zZskwv7KeVhPS5Hw_p_0s6TB9Er08-Jqb6E0Z3AhSNieKtHdfPV_a9Nsn"
+)
+
+# Webhook URL (defaults to Discord feedback channel; can be overridden via env)
+FEEDBACK_WEBHOOK_URL: str = os.environ.get(
+    "FEEDBACK_WEBHOOK_URL",
+    DISCORD_FEEDBACK_WEBHOOK,
+)
+
+
+# Local feedback log destination (fallback or local audit trail)
+if IS_STORAGE_MOUNTED and MCP_MODE == "cloud":
+    FEEDBACK_LOCAL_PATH: str = os.environ.get(
+        "FEEDBACK_LOCAL_PATH",
+        str(Path(PERSISTENT_STORAGE_ROOT) / "feedback.jsonl"),
+    )
+else:
+    FEEDBACK_LOCAL_PATH = os.environ.get(
+        "FEEDBACK_LOCAL_PATH",
+        str(_SRC_ROOT / "data" / "feedback.jsonl"),
+    )
+

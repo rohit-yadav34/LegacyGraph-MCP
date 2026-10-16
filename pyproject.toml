@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "legacy-mcp-analyzer"
-version = "2.0.0"
+version = "2.1.0"
 description = "MCP Server for analyzing C++ legacy codebases"
 authors = ["Antigravity <antigravity@example.com>"]
 readme = "README.md"

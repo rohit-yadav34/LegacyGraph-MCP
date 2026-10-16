@@ -168,6 +168,22 @@ Returns a message telling the user to open the file in their IDE's Markdown Prev
 
 ---
 
+### `send_feedback(message, category?, title?, email?, metadata?, webhook_url?)`
+
+Enables users or autonomous coding agents to submit feedback, report bugs, or request features directly to the project's Discord channel. If the Discord webhook is unavailable or the request fails, it automatically falls back to saving the feedback in the local audit log (`data/feedback.jsonl`).
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `message` | `str` (required) | — | Detailed feedback description or feature request |
+| `category` | `str` (optional) | `"feedback"` | Type: `'feature_request'`, `'bug'`, `'feedback'`, `'general'` |
+| `title` | `str` (optional) | `None` | Short summary (extracted from first line if omitted) |
+| `email` | `str` (optional) | `None` | Optional contact email or user identifier |
+| `metadata` | `dict` (optional) | `None` | Contextual dictionary (project_id, client name, environment) |
+| `webhook_url` | `str` (optional) | `None` | Optional webhook URL override |
+
+---
+
+
 ## 7. Deployment Modes
 
 | | Local Mode | Cloud Mode |

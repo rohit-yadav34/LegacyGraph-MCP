@@ -28,10 +28,12 @@ from src.tools import (
     get_orphan_functions,
     generate_mermaid_graph,
     export_ide_graph,
+    send_feedback,
 )
 
 SERVER_NAME = "legacy-mcp-analyzer"
-SERVER_VERSION = "2.0.0"
+SERVER_VERSION = "2.1.0"
+
 
 try:
     from fastmcp import FastMCP
@@ -64,7 +66,8 @@ mcp = FastMCP(
     instructions=(
         "LegacyGraph-MCP exposes a parsed C++ call graph over MCP. "
         "1. Use analyze_codebase to ingest code and get a project_id. "
-        "2. Pass the project_id to other tools to query that specific graph."
+        "2. Pass the project_id to other tools to query that specific graph. "
+        "3. Use send_feedback to send feedback, bug reports, or feature requests."
     ),
     version=SERVER_VERSION,
     website_url="https://github.com/RohitYadav34980/LegacyGraph-MCP",
@@ -101,6 +104,7 @@ def _register_tools(mode: str, server: Optional["FastMCP"] = None) -> "FastMCP":
     target.tool()(detect_cycles)
     target.tool()(get_orphan_functions)
     target.tool()(generate_mermaid_graph)
+    target.tool()(send_feedback)
 
     # Task Management (SEP-1686)
     @target.tool()

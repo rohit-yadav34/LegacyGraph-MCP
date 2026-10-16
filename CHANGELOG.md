@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] — 2026-10-16
+
+### Added
+- **`send_feedback` and `submit_feedback` MCP tools**:
+  - Lets users and coding agents submit feedback, bug reports, and feature requests directly from their MCP client.
+  - Multi-target dispatch:
+    - Webhook integration supporting generic JSON POST endpoints, Discord rich embeds, and Slack Block Kit messages.
+    - GitHub Issues integration via GitHub REST API (`POST /repos/{owner}/{repo}/issues`) with automatic labels (`feedback`, `enhancement`, `bug`).
+    - Local append-only JSONL audit log (`data/feedback.jsonl`) with resilient file locking and fallback.
+  - Configurable via `FEEDBACK_WEBHOOK_URL`, `GITHUB_TOKEN`, and `GITHUB_REPO` environment variables or runtime tool arguments.
+  - Fully registered in both local and cloud deployment modes and reflected on the live server card.
+
+---
+
 ## [2.0.0] — 2026-07-07
+
 
 ### Changed — MCP 2.0 Upgrade
 - **Migrated from the legacy `mcp.server.fastmcp` (FastMCP 1.0 bundled in the
